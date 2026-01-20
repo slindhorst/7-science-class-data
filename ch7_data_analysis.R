@@ -74,3 +74,39 @@ pre_survey <-
   mutate(q4 = reverse_scale(q4),
          q7 = reverse_scale(q7))
 print(pre_survey)
+
+#Pivot the dataset from wide to Long format
+measure_mean <-
+  pre_survey %>% 
+  # Gather questions and responses
+  pivot_longer(cols = q1:q10,
+               names_to = "question",
+               values_to = "response")
+measure_mean
+
+#Add measure variable
+measure_mean <- measure_mean %>% 
+  # Here's where we make the column of question categories called "measure"
+  mutate(
+    measure = case_when(
+      question %in% c("q1", "q4", "q8", "q10") ~ "int",
+      question %in% c("q2", "q6", "q9") ~ "uv",
+      question %in% c("q3", "q7") ~ "pc",
+      TRUE ~ NA_character_)
+    
+  )
+
+# Add measure variable
+measure_mean <- measure_mean %>%
+  # First, we gropu by the new variable "measure"
+  group_by(measure) %>%
+  # Here's where we compute the mean of the responses
+  summarize(
+    #Creating a new variable to indicate the mean response for each measure
+    mean_response = mean(response, na.rm = TRUE),
+    # Creating a new variable to indicate the percent of each measure that
+    # had NAs in teh response field
+    percent_NA = mean (is.na(response))
+  )
+
+measure_mean
