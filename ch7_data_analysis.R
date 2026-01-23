@@ -14,7 +14,7 @@ print(pre_survey)
 
 
 # Gradebook and log-trace data for F15 and S16 semesters
-course_datra <- dataedu::course_data
+course_data <- dataedu::course_data
 print(course_data)
 
 #Log-trace data for F15 and S16 semesters - this is for time spent
@@ -96,7 +96,7 @@ measure_mean <- measure_mean %>%
     
   )
 
-# Add measure variable
+# Add mean summary by measure
 measure_mean <- measure_mean %>%
   # First, we gropu by the new variable "measure"
   group_by(measure) %>%
@@ -110,3 +110,41 @@ measure_mean <- measure_mean %>%
   )
 
 measure_mean
+
+# split course section into components
+course_data <-
+  course_data %>% 
+  # Give course subject, semester, and section their own columns
+ separate_wider_delim(
+    cols = CourseSectionOrigID,
+    delim = "-",
+    names = c("subject", "semester", "section"),
+    cols_remove = FALSE
+  )
+
+# rename column names before joining data frames
+pre_survey <-
+  pre_survey %>% 
+  rename(student_id = opdata_username,
+         course_id = opdata_CourseID)
+
+pre_survey
+
+# Re-create the variable "student_id" so that it excludes extraneous characters
+pre_survey <- pre_survey %>% 
+  mutate(student_id = str_sub(student_id, start = 2, end = -3))
+
+# Save the new variable as numeric so that R no longer thinks it is text
+pre_survey <- pre_survey %>%
+  mutate(student_id = as.numeric(student_id))
+
+course_data <-
+  course_data %>%
+  rename(student_id = Bb_UserPK,
+         course_id = CourseSectionOrigID)
+
+dat <-
+  left_join(course_data, pre_survey,
+            by = c("student_id", "course_id"))
+
+dat
